@@ -128,7 +128,7 @@
                     clearInterval(timer);
                     const utterance = new SpeechSynthesisUtterance('Done, let it rest and Bon Appetit');
                     window.speechSynthesis.speak(utterance);
-                    steakVideo.pause();
+                    steakVideo.Stop();
                     steakVideo.currentTime = 0;
                     steakVideo.style.display = 'none';
                 }
