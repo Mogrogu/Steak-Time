@@ -7,14 +7,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mogz' Steak Time</title>
     <style>
-        body {
-            font-family: system-ui;
+       @font-face {
+            font-family: 'Boombox.ttf';
+            src: url('Boombox.ttf');
+       }
+       body {
+            font-family: 'Boombox.ttf';
             text-align: center;
+            margin-top: 50px;
             background-color: #f5f5f5;
         }
         body {
             background-image: url('pngegg.png');
-            margin-top: -20px;
+            margin-top: 30px;
             background-repeat: no-repeat;
             background-position: center center;
             background-size: contain;
@@ -30,28 +35,40 @@
             height: 100%;
             background-color: #ffffff54;
             position: absolute;
+            border-right: 5px, rgb(0, 0, 0), dashed;
+            
         }
         #timer {
             font-size: 80px;
-            font-weight: bold;
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
         }
         button {
-            font-size: 20px;
-            font-weight: bold;
+            font-family: 'Boombox.ttf';
+            font-size: 15px;
+
             padding: 10px;
             margin-top: 30px;
-            background-color: #ff0000;
-            border-radius: 10% / 40%;
+            background-color: #d30303;
+            border-radius: 50%;
+            width: 90px;
+            height: 90px;
             color: white;
             border: none;
+            box-shadow: 0px 3px 10px #414040;
             cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            
         }
+        button:active {
+      transform: translateY(5px);
+      box-shadow: 0px 2px 0px #00663c;
+    }
+    
         button:hover {
-            background-color: #ff000086;
+            background-color: #696868b4;
         }
         .marker {
             position: absolute;
@@ -61,10 +78,10 @@
         }
         .marker-label {
             position: absolute;
-            top: 90%;
-            right: 130%;
+            top: 92%;
+            right: 140%;
+            margin-right: 5px;
             font-size: 20px;
-            font-weight: bold;
             font-style: oblique;
         }
         #steak-video {
@@ -79,21 +96,26 @@
         }
         
         #timeSelection {
+            font-family: 'Courier New', Courier, monospace;
             font-size: 20px;
-            
-            padding: 5px;
-            margin-top: 30px;
-            margin-left: 30px;
+            padding: 5px 20px;
+            margin-top: 20px;
+            margin-left: 20px;
             background-color: #681602;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 10% / 65%;
+            height: 40px;
+            
+        }
+        #title{
+            margin-bottom: 50px;
         }
     </style>
 </head>
 <body>
-    <h1>Mogz' Steak Time</h1>
+    <h1 id="title">Mogz' Steak Time</h1>
     <div id="timer-bar">
         <div id="elapsed"></div>
         <div id="timer">8:00</div>
@@ -111,7 +133,7 @@
         const noSleep = new NoSleep();
         let timer;
         let elapsedWidth = 0;
-        let timeLeft = 8 * 60;
+        let timeLeft = 8 * 60; // Set default value for timeLeft
         let timeElapsed = 0;
         const timerElement = document.getElementById('timer');
         const elapsedElement = document.getElementById('elapsed');
@@ -119,67 +141,74 @@
         const timeSelection = document.getElementById('timeSelection');
         const timerBar = document.getElementById('timer-bar');
     
-        
-    function startTimer() {
-        clearInterval(timer);
-        const selectedTime = parseInt(timeSelection.value);
-        timeLeft = selectedTime * 60;
-        timeElapsed = 0;
-        elapsedWidth = 0;
-        elapsedElement.style.width = '0%';
-        steakVideo.style.display = 'none';
+        // Update initial timer value based on dropdown selection
+        timeSelection.addEventListener('change', function () {
+            const selectedTime = parseInt(timeSelection.value);
+            timeLeft = selectedTime * 60;
+            timerElement.textContent = `${selectedTime}:00`;
+        });
+    
+        function startTimer() {
+            clearInterval(timer);
+            timeElapsed = 0;
+            elapsedWidth = 0;
+            elapsedElement.style.width = '0%';
+            steakVideo.style.display = 'none';
+    
+            // Clear old markers
+            const oldMarkers = document.querySelectorAll('.marker, .marker-label');
+            oldMarkers.forEach(marker => marker.remove());
+    
+            // Create new markers
+            const selectedTime = parseInt(timeSelection.value);
+            for (let i = 1; i <= selectedTime / 2; i++) {
+                const marker = document.createElement('div');
+                marker.className = 'marker';
+                marker.style.left = `${(i * 2 / selectedTime) * 100}%`;
+                timerBar.appendChild(marker);
+    
+                const label = document.createElement('span');
+                label.className = 'marker-label';
+                label.textContent = `${i * 2}:0 `;
+                marker.appendChild(label);
+            }
+    
+            timeLeft = selectedTime * 60;
 
-        // Clear old markers
-        const oldMarkers = document.querySelectorAll('.marker, .marker-label');
-        oldMarkers.forEach(marker => marker.remove());
-
-        // Create new markers
-        for (let i = 1; i < selectedTime / 2; i++) {
-            const marker = document.createElement('div');
-            marker.className = 'marker';
-            marker.style.left = `${(i * 2 / selectedTime) * 100}%`;
-            timerBar.appendChild(marker);
-
-            const label = document.createElement('span');
-            label.className = 'marker-label';
-            label.textContent = `${i * 2}:0`;
-            marker.appendChild(label);
+             // Speech synthesis
+                const utterance = new SpeechSynthesisUtterance('Let\'s get sizzling');
+                window.speechSynthesis.speak(utterance);
+    
+            timer = setInterval(function () {
+                timeElapsed++;
+                timeLeft--;
+                elapsedWidth = (timeElapsed / (selectedTime * 60)) * 100;
+                elapsedElement.style.width = elapsedWidth + '%';
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+                if (timeElapsed % 120 === 0 && timeLeft !== 0) {
+                    const utterance = new SpeechSynthesisUtterance('Flip');
+                    window.speechSynthesis.speak(utterance);
+                }
+    
+                if (timeElapsed === 60 * 9) {
+                    steakVideo.style.display = 'block';
+                }
+    
+                if (timeLeft === 0) {
+                    clearInterval(timer);
+                    const utterance = new SpeechSynthesisUtterance('Done, let it rest and Bon Appetit');
+                    window.speechSynthesis.speak(utterance);
+                    steakVideo.stop();
+                    steakVideo.currentTime = 0;
+                    steakVideo.style.display = 'none';
+                }
+            }, 1000);
+    
+            noSleep.enable();
         }
-
-        const utterance = new SpeechSynthesisUtterance('Let\'s get sizzling');
-        window.speechSynthesis.speak(utterance);
-
-        timer = setInterval(function () {
-            timeElapsed++;
-            timeLeft--;
-            elapsedWidth = (timeElapsed / (selectedTime * 60)) * 100;
-            elapsedElement.style.width = elapsedWidth + '%';
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-            if (timeElapsed % 120 === 0 && timeLeft !== 0) {
-                const utterance = new SpeechSynthesisUtterance('Flip');
-                window.speechSynthesis.speak(utterance);
-            }
-
-            if (timeElapsed === 60 * 9) {
-                steakVideo.style.display = 'block';
-            }
-
-            if (timeLeft === 0) {
-                clearInterval(timer);
-                const utterance = new SpeechSynthesisUtterance('Done, let it rest and Bon Appetit');
-                window.speechSynthesis.speak(utterance);
-                steakVideo.stop();
-                steakVideo.currentTime = 0;
-                steakVideo.style.display = 'none';
-            }
-        }, 1000);
-
-        noSleep.enable();
-    }
-</script>
-</body>
-</html>
+    </script>
+    
 
