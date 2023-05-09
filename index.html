@@ -45,6 +45,7 @@
             padding: 10px;
             margin-top: 30px;
             background-color: #ff0000;
+            border-radius: 10% / 40%;
             color: white;
             border: none;
             cursor: pointer;
@@ -69,6 +70,26 @@
         #steak-video {
             display: none;
         }
+
+        #control-panel {
+            display: flex;
+            flex-direction: row;
+            align-items: left;
+            justify-content:left ;
+        }
+        
+        #timeSelection {
+            font-size: 20px;
+            
+            padding: 5px;
+            margin-top: 30px;
+            margin-left: 30px;
+            background-color: #681602;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 10% / 65%;
+        }
     </style>
 </head>
 <body>
@@ -76,15 +97,16 @@
     <div id="timer-bar">
         <div id="elapsed"></div>
         <div id="timer">8:00</div>
-        <div class="marker" style="left: 25%;"><span class="marker-label">2:00</span></div>
-        <div class="marker" style="left: 50%;"><span class="marker-label">4:00</span></div>
-        <div class="marker" style="left: 75%;"><span class="marker-label">6:00</span></div>
-        <div class="marker" style="left: 100%;"><span class="marker-label">8:00</span></div>
     </div>
-    <button onclick="startTimer()">Start</button>
+    <button onclick="startTimer()">START</button>
     <video id="steak-video" width="100%" height="10" loop>
         <source src="steak.mp4" type="video/mp4">
     </video>
+    <select id="timeSelection">
+        <option value="8">Normal: 8 Min.</option>
+        <option value="10">Thick: 10 Min.</option>
+        <option value="12">Thicker: 12 Min.</option>
+    </select>
     <script>
         const noSleep = new NoSleep();
         let timer;
@@ -94,49 +116,70 @@
         const timerElement = document.getElementById('timer');
         const elapsedElement = document.getElementById('elapsed');
         const steakVideo = document.getElementById('steak-video');
+        const timeSelection = document.getElementById('timeSelection');
+        const timerBar = document.getElementById('timer-bar');
     
-        function startTimer() {
-            clearInterval(timer);
-            timeLeft = 8 * 60;
-            timeElapsed = 0;
-            elapsedWidth = 0;
-            elapsedElement.style.width = '0%';
-            steakVideo.style.display = 'none';
-    
-            const utterance = new SpeechSynthesisUtterance('Let\'s get sizzling');
-            window.speechSynthesis.speak(utterance);
-    
-            timer = setInterval(function () {
-                timeElapsed++;
-                timeLeft--;
-                elapsedWidth = (timeElapsed / (8 * 60)) * 100;
-                elapsedElement.style.width = elapsedWidth + '%';
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    
-                if (timeElapsed % 120 === 0 && timeLeft !== 0) {
-                    const utterance = new SpeechSynthesisUtterance('Flip');
-                    window.speechSynthesis.speak(utterance);
-                }
-    
-                if (timeElapsed === 60 * 9) {
-                    steakVideo.style.display = 'block';
-                }
-    
-                if (timeLeft === 0) {
-                    clearInterval(timer);
-                    const utterance = new SpeechSynthesisUtterance('Done, let it rest and Bon Appetit');
-                    window.speechSynthesis.speak(utterance);
-                    steakVideo.Stop();
-                    steakVideo.currentTime = 0;
-                    steakVideo.style.display = 'none';
-                }
-            }, 1000);
-    
-            noSleep.enable();
+        
+    function startTimer() {
+        clearInterval(timer);
+        const selectedTime = parseInt(timeSelection.value);
+        timeLeft = selectedTime * 60;
+        timeElapsed = 0;
+        elapsedWidth = 0;
+        elapsedElement.style.width = '0%';
+        steakVideo.style.display = 'none';
+
+        // Clear old markers
+        const oldMarkers = document.querySelectorAll('.marker, .marker-label');
+        oldMarkers.forEach(marker => marker.remove());
+
+        // Create new markers
+        for (let i = 1; i < selectedTime / 2; i++) {
+            const marker = document.createElement('div');
+            marker.className = 'marker';
+            marker.style.left = `${(i * 2 / selectedTime) * 100}%`;
+            timerBar.appendChild(marker);
+
+            const label = document.createElement('span');
+            label.className = 'marker-label';
+            label.textContent = `${i * 2}:0`;
+            marker.appendChild(label);
         }
-    </script>
-    </body>
-    </html>
-    
+
+        const utterance = new SpeechSynthesisUtterance('Let\'s get sizzling');
+        window.speechSynthesis.speak(utterance);
+
+        timer = setInterval(function () {
+            timeElapsed++;
+            timeLeft--;
+            elapsedWidth = (timeElapsed / (selectedTime * 60)) * 100;
+            elapsedElement.style.width = elapsedWidth + '%';
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeElapsed % 120 === 0 && timeLeft !== 0) {
+                const utterance = new SpeechSynthesisUtterance('Flip');
+                window.speechSynthesis.speak(utterance);
+            }
+
+            if (timeElapsed === 60 * 9) {
+                steakVideo.style.display = 'block';
+            }
+
+            if (timeLeft === 0) {
+                clearInterval(timer);
+                const utterance = new SpeechSynthesisUtterance('Done, let it rest and Bon Appetit');
+                window.speechSynthesis.speak(utterance);
+                steakVideo.stop();
+                steakVideo.currentTime = 0;
+                steakVideo.style.display = 'none';
+            }
+        }, 1000);
+
+        noSleep.enable();
+    }
+</script>
+</body>
+</html>
+
